@@ -95,7 +95,8 @@ module Cask
       :disable_replacement,
       :discontinued?, # TODO: remove once discontinued? is removed (4.5.0)
       :livecheck,
-      :livecheckable?,
+      :livecheck_block?,
+      :livecheckable?, # TODO: remove once `#livecheckable?` is removed
       :on_system_blocks_exist?,
       :on_system_block_min_os,
       :depends_on_set_in_block?,
@@ -110,7 +111,7 @@ module Cask
     attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :deprecation_replacement, :disable_date,
                 :disable_reason, :disable_replacement, :on_system_block_min_os
 
-    attr_predicate :deprecated?, :disabled?, :livecheckable?, :on_system_blocks_exist?, :depends_on_set_in_block?
+    attr_predicate :deprecated?, :disabled?, :livecheck_block?, :on_system_blocks_exist?, :depends_on_set_in_block?
 
     def initialize(cask)
       @cask = cask
@@ -431,12 +432,20 @@ module Cask
       @livecheck ||= Livecheck.new(cask)
       return @livecheck unless block
 
-      if !@cask.allow_reassignment && @livecheckable
+      if !@cask.allow_reassignment && @livecheck_block
         raise CaskInvalidError.new(cask, "'livecheck' stanza may only appear once.")
       end
 
-      @livecheckable = true
+      @livecheck_block = true
       @livecheck.instance_eval(&block)
+    end
+
+    # Whether the cask contains a `livecheck` block. This is a legacy alias
+    # for `#livecheck_block?`.
+    sig { returns(T::Boolean) }
+    def livecheckable?
+      # odeprecated "`livecheckable?`", "`livecheck_block?`"
+      @livecheck_block == true
     end
 
     # Declare that a cask is no longer functional or supported.

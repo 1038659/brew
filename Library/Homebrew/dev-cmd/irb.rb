@@ -64,7 +64,7 @@ module Homebrew
             :mpd.f.recursive_dependencies.reject(&:installed?)
 
             'vlc'.c # => instance of the vlc cask
-            :tsh.c.livecheckable?
+            :tsh.c.livecheck_block?
           EOS
           return
         end

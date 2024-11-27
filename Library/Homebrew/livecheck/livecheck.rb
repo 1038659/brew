@@ -347,7 +347,9 @@ module Homebrew
           newer_than_upstream: is_newer_than_upstream,
         }.compact
         info[:meta] = {
-          livecheckable: formula_or_cask.livecheckable?,
+          has_livecheck_block: formula_or_cask.livecheck_block?,
+          # TODO: Remove `livecheckable` field after aliases are removed
+          livecheckable:       formula_or_cask.livecheck_block?,
         }
         info[:meta][:head_only] = true if formula&.head_only?
         info[:meta].merge!(version_info[:meta]) if version_info.present? && version_info.key?(:meta)
@@ -465,7 +467,9 @@ module Homebrew
       status_hash[:messages] = messages if messages.is_a?(Array)
 
       status_hash[:meta] = {
-        livecheckable: package_or_resource.livecheckable?,
+        has_livecheck_block: package_or_resource.livecheck_block?,
+        # TODO: Remove `livecheckable` field after aliases are removed
+        livecheckable:       package_or_resource.livecheck_block?,
       }
       status_hash[:meta][:head_only] = true if formula&.head_only?
 
@@ -478,7 +482,7 @@ module Homebrew
       package_or_resource_s = info[:resource].present? ? "  " : ""
       package_or_resource_s += "#{Tty.blue}#{info[:formula] || info[:cask] || info[:resource]}#{Tty.reset}"
       package_or_resource_s += " (cask)" if ambiguous_cask
-      package_or_resource_s += " (guessed)" if verbose && !info[:meta][:livecheckable]
+      package_or_resource_s += " (guessed)" if verbose && !info[:meta][:livecheck_block]
 
       current_s = if info[:version][:newer_than_upstream]
         "#{Tty.red}#{info[:version][:current]}#{Tty.reset}"
@@ -608,7 +612,7 @@ module Homebrew
       formula = formula_or_cask if formula_or_cask.is_a?(Formula)
       cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
 
-      has_livecheckable = formula_or_cask.livecheckable?
+      has_livecheck_block = formula_or_cask.livecheck_block?
       livecheck = formula_or_cask.livecheck
       referenced_livecheck = referenced_formula_or_cask&.livecheck
 
@@ -632,7 +636,7 @@ module Homebrew
         elsif cask
           puts "Cask:             #{cask_name(formula_or_cask, full_name:)}"
         end
-        puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
+        puts "livecheck block?: #{has_livecheck_block ? "Yes" : "No"}"
         puts "Throttle:         #{livecheck_throttle}" if livecheck_throttle
 
         livecheck_references.each do |ref_formula_or_cask|
@@ -736,7 +740,7 @@ module Homebrew
 
         match_version_map.delete_if do |_match, version|
           next true if version.blank?
-          next false if has_livecheckable
+          next false if has_livecheck_block
 
           UNSTABLE_VERSION_KEYWORDS.any? do |rejection|
             version.to_s.include?(rejection)
@@ -839,12 +843,12 @@ module Homebrew
       quiet: false,
       verbose: false
     )
-      has_livecheckable = resource.livecheckable?
+      has_livecheck_block = resource.livecheck_block?
 
       if debug
         puts "\n\n"
         puts "Resource:         #{resource.name}"
-        puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
+        puts "livecheck block?: #{has_livecheck_block ? "Yes" : "No"}"
       end
 
       resource_version_info = {}
@@ -939,7 +943,7 @@ module Homebrew
 
         match_version_map.delete_if do |_match, version|
           next true if version.blank?
-          next false if has_livecheckable
+          next false if has_livecheck_block
 
           UNSTABLE_VERSION_KEYWORDS.any? do |rejection|
             version.to_s.include?(rejection)
@@ -978,7 +982,12 @@ module Homebrew
           },
         }
 
-        resource_version_info[:meta] = { livecheckable: has_livecheckable, url: {} }
+        resource_version_info[:meta] = {
+          has_livecheck_block: has_livecheck_block,
+          # TODO: Remove `livecheckable` field after aliases are removed
+          livecheckable:       has_livecheck_block,
+          url:                 {},
+        }
         if livecheck_url.is_a?(Symbol) && livecheck_url_string
           resource_version_info[:meta][:url][:symbol] = livecheck_url
         end
